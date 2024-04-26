@@ -53,15 +53,22 @@ impl std::ops::AddAssign for Tally {
 fn main() {
     let mut tally = Tally::new();
 
+    let mut handles = vec![];
     for _ in 0..10 {
-        let mut temp_tally = Tally::new();
+        handles.push(std::thread::spawn(|| {
+            let mut thread_tally = Tally::new();
 
-        for _ in 0..100000 {
-            let hit = Point::new().within_unit_circle();
-            temp_tally.count(hit);
-        }
+            for _ in 0..1000000 {
+                let hit = Point::new().within_unit_circle();
+                thread_tally.count(hit);
+            }
 
-        tally += temp_tally
+            thread_tally
+        }));
+    }
+
+    for handle in handles {
+        tally += handle.join().unwrap();
     }
 
     let pi = 4.0 * tally.hit_rate();
