@@ -69,8 +69,8 @@ fn main() {
 
     for handle in handles {
         tally += handle.join().unwrap();
-    }
 
-    let pi = 4.0 * tally.hit_rate();
-    println!("after {} iterations, estimate of π: {}", tally.total, pi)
+        let pi = 4.0 * tally.hit_rate();
+        println!("after {} iterations, estimate of π: {}", tally.total, pi)
+    }
 }
