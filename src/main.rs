@@ -1,3 +1,4 @@
+use std::fmt;
 use std::sync::mpsc;
 
 struct Point {
@@ -52,6 +53,13 @@ impl std::ops::AddAssign for Tally {
     }
 }
 
+impl fmt::Display for Tally {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let pi = 4.0 * self.hit_rate();
+        write!(f, "with {} hits tallied after {} iterations, π ≈ {}", self.hits, self.total, pi)
+    }
+}
+
 fn sample(times: usize) -> Tally {
     let mut tally = Tally::new();
 
@@ -77,9 +85,8 @@ fn main() {
 
     let mut tally = Tally::new();
     for incoming_tally in rx {
-        tally += incoming_tally
+        tally += incoming_tally;
     }
 
-    let pi = 4.0 * tally.hit_rate();
-    println!("after {} iterations, estimate of π: {}", tally.total, pi);
+    println!("Result: {}", tally);
 }
