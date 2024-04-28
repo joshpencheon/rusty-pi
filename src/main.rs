@@ -1,4 +1,4 @@
-use std::sync::{Arc, Mutex};
+use std::sync::mpsc;
 
 struct Point {
     x: f32,
@@ -52,26 +52,34 @@ impl std::ops::AddAssign for Tally {
     }
 }
 
-fn main() {
-    let tally = Arc::new(Mutex::new(Tally::new()));
+fn sample(times: usize) -> Tally {
+    let mut tally = Tally::new();
 
-    for _ in 0..10 {
-        let shared_tally = Arc::clone(&tally);
-        std::thread::spawn(move || {
-            let mut thread_tally = Tally::new();
-
-            for _ in 0..1000000 {
-                let hit = Point::new().within_unit_circle();
-                thread_tally.count(hit);
-            }
-
-            (*shared_tally.lock().unwrap()) += thread_tally;
-        });
+    for _ in 0..times {
+        let hit = Point::new().within_unit_circle();
+        tally.count(hit);
     }
 
-    while Arc::strong_count(&tally) > 1 { () };
+    tally
+}
 
-    let tally = tally.lock().unwrap();
+fn main() {
+    let (tx,rx) = mpsc::channel();
+
+    for _ in 0..10 {
+        let tx = tx.clone();
+        std::thread::spawn(move || {
+            let thread_tally = sample(1000000);
+            tx.send(thread_tally).unwrap();
+        });
+    }
+    drop(tx);
+
+    let mut tally = Tally::new();
+    for incoming_tally in rx {
+        tally += incoming_tally
+    }
+
     let pi = 4.0 * tally.hit_rate();
     println!("after {} iterations, estimate of π: {}", tally.total, pi);
 }
