@@ -1,3 +1,5 @@
+use std::sync::{Arc, Mutex};
+
 struct Point {
     x: f32,
     y: f32
@@ -51,11 +53,11 @@ impl std::ops::AddAssign for Tally {
 }
 
 fn main() {
-    let mut tally = Tally::new();
+    let tally = Arc::new(Mutex::new(Tally::new()));
 
-    let mut handles = vec![];
     for _ in 0..10 {
-        handles.push(std::thread::spawn(|| {
+        let shared_tally = Arc::clone(&tally);
+        std::thread::spawn(move || {
             let mut thread_tally = Tally::new();
 
             for _ in 0..1000000 {
@@ -63,14 +65,13 @@ fn main() {
                 thread_tally.count(hit);
             }
 
-            thread_tally
-        }));
+            (*shared_tally.lock().unwrap()) += thread_tally;
+        });
     }
 
-    for handle in handles {
-        tally += handle.join().unwrap();
+    while Arc::strong_count(&tally) > 1 { () };
 
-        let pi = 4.0 * tally.hit_rate();
-        println!("after {} iterations, estimate of π: {}", tally.total, pi)
-    }
+    let tally = tally.lock().unwrap();
+    let pi = 4.0 * tally.hit_rate();
+    println!("after {} iterations, estimate of π: {}", tally.total, pi);
 }
