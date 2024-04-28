@@ -1,5 +1,6 @@
 use std::fmt;
 use std::sync::mpsc;
+use std::thread;
 
 struct Point {
     x: f32,
@@ -74,7 +75,14 @@ fn sample(times: usize) -> Tally {
 fn main() {
     let (tx,rx) = mpsc::channel();
 
-    for _ in 0..10 {
+    let thread_count = match thread::available_parallelism() {
+        Ok(available) => available.get(),
+        Err(_) => 1
+    };
+
+    println!("Sampling across {} thread(s)...", thread_count);
+
+    for _ in 0..thread_count {
         let tx = tx.clone();
         std::thread::spawn(move || {
             let thread_tally = sample(1000000);

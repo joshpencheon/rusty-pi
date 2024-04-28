@@ -8,5 +8,6 @@ $ cargo run
     Finished dev [unoptimized + debuginfo] target(s) in 0.26s
      Running `target/debug/rusty-pi`
 
-Result: with 7851738 hits tallied after 10000000 iterations, π ≈ 3.140695
+Sampling across 8 thread(s)...
+Result: with 6285267 hits tallied after 8000000 iterations, π ≈ 3.1426334
 ```
